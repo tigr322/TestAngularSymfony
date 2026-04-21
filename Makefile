@@ -2,7 +2,7 @@ DC=docker compose
 
 .PHONY: setup up down restart logs shell composer-install npm-install migrate fixtures test-backend test-frontend test-e2e build-backend build-frontend
 
-setup: build-backend up composer-install migrate npm-install
+setup: build-backend npm-install up composer-install migrate
 
 build-backend:
 	$(DC) build backend
@@ -25,7 +25,7 @@ composer-install:
 	$(DC) exec backend composer install
 
 npm-install:
-	$(DC) exec frontend npm install
+	$(DC) run --rm --no-deps frontend npm install
 
 migrate:
 	$(DC) exec backend php bin/console doctrine:migrations:migrate --no-interaction
