@@ -1,0 +1,31 @@
+<section class="page-header">
+  <div>
+    <p class="eyebrow">Catalog</p>
+    <h1>Imported products</h1>
+  </div>
+  <a routerLink="/import" class="secondary-link">Import XLSX</a>
+</section>
+
+<section class="panel state" *ngIf="isLoading">Loading products...</section>
+<section class="panel error" *ngIf="error">{{ error }}</section>
+<section class="panel state" *ngIf="!isLoading && !error && products.length === 0">
+  No products have been imported yet.
+</section>
+
+<section class="products-grid" *ngIf="!isLoading && !error && products.length > 0">
+  <a class="product-card" *ngFor="let product of products" [routerLink]="['/products', product.id]">
+    <div class="thumb">
+      <img *ngIf="product.firstImage; else noImage" [src]="productApi.imageUrl(product.firstImage)" [alt]="product.name" />
+      <ng-template #noImage><span>No image</span></ng-template>
+    </div>
+    <div class="product-info">
+      <h2>{{ product.name }}</h2>
+      <p class="code">{{ product.externalCode }}</p>
+      <div class="meta">
+        <span>{{ product.price }} RUB</span>
+        <span *ngIf="product.discountPercent">{{ product.discountPercent }}%</span>
+        <span>{{ product.imageCount }} images</span>
+      </div>
+    </div>
+  </a>
+</section>

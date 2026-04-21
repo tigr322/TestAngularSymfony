@@ -1,0 +1,56 @@
+<section class="page-header">
+  <div>
+    <p class="eyebrow">Product card</p>
+    <h1>{{ product?.name || 'Product details' }}</h1>
+  </div>
+  <a routerLink="/products" class="secondary-link">Back to products</a>
+</section>
+
+<section class="panel state" *ngIf="isLoading">Loading product...</section>
+<section class="panel error" *ngIf="error">{{ error }}</section>
+
+<ng-container *ngIf="product && !isLoading && !error">
+  <section class="details-layout">
+    <div class="gallery panel">
+      <img
+        *ngFor="let image of product.images"
+        [src]="productApi.imageUrl(image.localPath)"
+        [alt]="product.name"
+      />
+      <div class="state" *ngIf="product.images.length === 0">No downloaded images.</div>
+    </div>
+
+    <div class="panel summary">
+      <p class="code">{{ product.externalCode }}</p>
+      <p class="description">{{ product.description || 'No description provided.' }}</p>
+
+      <dl class="price-grid">
+        <div>
+          <dt>Sale price</dt>
+          <dd>{{ product.price }} RUB</dd>
+        </div>
+        <div>
+          <dt>Purchase price</dt>
+          <dd>{{ product.purchasePrice || 'n/a' }}</dd>
+        </div>
+        <div>
+          <dt>Discount</dt>
+          <dd>{{ product.discountPercent ? product.discountPercent + '%' : 'n/a' }}</dd>
+        </div>
+      </dl>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>Attributes</h2>
+    <div class="attributes" *ngIf="product.attributes.length > 0; else noAttributes">
+      <div *ngFor="let attribute of product.attributes">
+        <dt>{{ attribute.key }}</dt>
+        <dd>{{ attribute.value }}</dd>
+      </div>
+    </div>
+    <ng-template #noAttributes>
+      <p class="state">No additional attributes.</p>
+    </ng-template>
+  </section>
+</ng-container>
