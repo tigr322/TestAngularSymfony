@@ -1,446 +1,132 @@
-Product Import/Export Test Project
+# Product Import/Export Test Project
 
-Overview
+Fullstack test assignment built with Symfony, Doctrine ORM, PostgreSQL, Angular, Vite-powered Angular tooling, TypeScript, Docker Compose, PHPUnit, Playwright, PhpSpreadsheet, and Nelmio OpenAPI.
 
-This repository contains a fullstack test assignment built with Symfony, Doctrine ORM, PostgreSQL, Angular, Vite, TypeScript, and Docker Compose.
+The app imports products from an `.xlsx` file, upserts them by `external_code`, stores additional `Доп. поле` columns as attributes, downloads product images locally, and exposes a small frontend for importing and browsing products.
 
-The application imports products from an .xlsx file, persists them in PostgreSQL, downloads and stores product images locally, and provides a clean frontend for browsing imported products.
+## Stack
 
-The project is designed as a practical, interview-quality solution with an API-first backend, a typed Angular frontend, clean architecture, deterministic tests, and a simple local developer experience.
+- Backend: Symfony 8, Doctrine ORM, Doctrine Migrations, PostgreSQL, PhpSpreadsheet, Symfony HttpClient, PHPUnit, NelmioApiDocBundle
+- Frontend: Angular 21, TypeScript, Angular Router, Angular HttpClient, Angular CLI Vite-based dev/build pipeline, Playwright
+- Infrastructure: Docker Compose with `backend`, `nginx`, `postgres`, and `frontend` services
 
-⸻
+## Setup
 
-Goals
+```bash
+make setup
+```
 
-The application must:
+This builds the PHP image, starts Docker Compose, installs backend/frontend dependencies, and runs migrations.
 
-* import products from an .xlsx file
-* create or update products by external_code
-* extract all columns starting with Доп. поле into additional product attributes
-* download product images from URLs and store them locally
-* expose REST API endpoints for import, product listing, and product details
-* provide a frontend with three pages:
-    * import page
-    * products list page
-    * product details page
+Useful commands:
 
-⸻
+```bash
+make up
+make down
+make migrate
+make fixtures
+make test-backend
+make test-frontend
+make test-e2e
+```
 
-Tech Stack
+Local URLs:
 
-Backend
+- Frontend: `http://localhost:4200`
+- Backend API through nginx: `http://localhost:8080/api`
+- OpenAPI JSON: `http://localhost:8080/api/doc.json`
 
-* Symfony
-* Doctrine ORM
-* Doctrine Migrations
-* PostgreSQL
-* PHPUnit
-* PhpSpreadsheet
-* Symfony HttpClient or Guzzle
-* Swagger / OpenAPI via NelmioApiDocBundle or swagger-php
+## API
 
-Frontend
+- `POST /api/import/products` accepts multipart form field `file` with an `.xlsx` document and returns import statistics.
+- `GET /api/products` returns list data for the products page.
+- `GET /api/products/{id}` returns core fields, attributes, and images for a product card.
 
-* Angular
-* Vite
-* TypeScript
-* Angular Router
-* Angular HttpClient
-* Playwright for E2E tests
+## XLSX Import Format
 
-Infrastructure
+Reference file: `docs/import example (2).xlsx`
 
-* Docker Compose
-* PHP-FPM / App container
-* Nginx container
-* PostgreSQL container
-* Node / Frontend container
+Expected sheet shape:
 
-⸻
+- first sheet is used
+- row `1` contains headers
+- product rows start at row `2`
 
-Functional Scope
+Core field mapping:
 
-1. Product Import Page
+| Product field | XLSX column |
+|---|---|
+| `externalCode` | `Внешний код` |
+| `name` | `Наименование` |
+| `description` | `Описание` |
+| `price` | `Цена: Цена продажи` |
+| `purchasePrice` | `Закупочная цена` |
+| `discountPercent` | calculated |
 
-The import page must provide:
+Decimal values support comma notation such as `1320,00`.
 
-* .xlsx file selection
-* import button
-* request to backend API
-* visible loading state
-* import result summary
-* validation and error display
-* row-level error feedback when available
+Discount formula:
 
-2. Products List Page
-
-The products list page must:
-
-* fetch all imported products from API
-* display them as a list or cards
-* make each product clickable
-* navigate to the product details page
-* support loading, empty, and error states
-
-3. Product Details Page
-
-The product details page must:
-
-* fetch a product by id
-* display all core product fields
-* display additional attributes
-* display all related images
-* support loading, not-found, and error states
-
-⸻
-
-API Endpoints
-
-Required
-
-POST /api/import/products
-
-Imports products from an uploaded .xlsx file.
-
-Expected behavior:
-
-* validate file type and contents
-* parse rows
-* create or update products by external_code
-* synchronize attributes and images
-* return import statistics and errors
-
-GET /api/products
-
-Returns a list of imported products.
-
-Expected behavior:
-
-* return predictable JSON
-* return enough fields for list rendering
-* remain simple and frontend-friendly
-
-GET /api/products/{id}
-
-Returns detailed information for a single product.
-
-Expected behavior:
-
-* return product core fields
-* return additional attributes
-* return related images
-* return 404 if the product does not exist
-
-Optional
-
-GET /api/import/status/{id}
-
-Optional endpoint if asynchronous import is introduced.
-
-For this assignment, a synchronous import with statistics returned directly from POST /api/import/products is fully acceptable.
-
-⸻
-
-Database Schema
-
-The project must contain three main tables.
-
-products
-
-Field	Type	Notes
-id	integer / bigint	primary key
-external_code	string	unique, required
-name	string	required
-description	text	nullable if source allows
-price	decimal	current sale price
-purchase_price	decimal	закупочная цена, nullable if missing in source
-discount_percent	decimal	calculated field
-created_at	datetime	set by application
-updated_at	datetime	set by application
-
-product_attributes
-
-Field	Type	Notes
-id	integer / bigint	primary key
-product_id	FK	references products.id, cascade delete
-attribute_key	string	attribute name
-attribute_value	text	attribute value
-
-product_images
-
-Field	Type	Notes
-id	integer / bigint	primary key
-product_id	FK	references products.id, cascade delete
-source_url	text	original image URL
-local_path	string	stored file path
-
-⸻
-
-Import Rules
-
-Business Key
-
-* external_code is the business key for product upsert.
-* Re-importing the same product must update the existing record instead of creating duplicates.
-
-Attributes
-
-* Every column whose header starts with Доп. поле must be stored in product_attributes.
-* Attribute synchronization should be deterministic during repeated imports.
-
-Images
-
-* Image URLs must be detected from the source file format.
-* Images must be downloaded locally.
-* Both original URL and local file path must be stored.
-* Failures while downloading images must be handled gracefully.
-
-Idempotency
-
-The import flow must be idempotent:
-
-* same file import should not create duplicate products
-* products must be updated by external_code
-* stale attributes/images should be synchronized according to the chosen implementation strategy and documented in code/README
-
-Error Handling
-
-The import flow must handle:
-
-* invalid file type
-* corrupted .xlsx file
-* empty rows
-* missing required fields
-* invalid URLs
-* unavailable image resources
-
-The backend should report:
-
-* created count
-* updated count
-* skipped count
-* error count
-* row-level errors when possible
-
-⸻
-
-Discount Calculation
-
-discount_percent must be calculated in a single dedicated place in backend code.
-
-Suggested formula:
-
+```text
 ((price - purchase_price) / purchase_price) * 100
+```
 
-Implementation requirements:
+The value is rounded to two decimals. If purchase price is missing or zero, `discountPercent` is stored as `null`.
 
-* keep the formula documented
-* cover it with unit tests
-* handle division by zero safely
-* handle missing values safely
+## Attributes And Images
 
-⸻
+Every column starting with `Доп. поле:` is synchronized into `product_attributes`.
 
-Architecture Principles
+Image URLs are extracted from:
 
-The project should follow these principles:
+- `Доп. поле: Ссылка на упаковку`
+- `Доп. поле: Ссылки на фото`, split by comma
 
-* DRY
-* KISS
-* SOLID
-* API-first backend
-* explicit validation
-* simple and reviewable architecture
-* no unnecessary abstractions
+Images are downloaded to `backend/public/uploads/products/...`. The database stores both the original `sourceUrl` and the web-facing `localPath`.
 
-Backend Principles
+Repeated imports are deterministic:
 
-* thin controllers
-* business logic in services
-* Doctrine repositories only for query logic
-* DTOs only where they improve clarity
-* centralized error handling
-* migrations for every schema change
+- products are upserted by `externalCode`
+- attributes are updated, created, or removed to match the current row
+- images are synchronized by source URL and are not duplicated
+- image download errors are returned as row-level import errors without rolling back the product row
 
-Frontend Principles
+## Architecture Notes
 
-* feature-based structure
-* typed API models
-* API communication via Angular services
-* small focused components
-* explicit loading / error / empty states
-* no unnecessary global state solution
+- Controllers only parse requests and return JSON responses.
+- Import logic is split into parser, mapper, validator-style row mapping, product sync, attribute sync, image sync, image download, and discount calculation services.
+- Doctrine repositories only contain query logic.
+- Frontend pages are feature-based and consume the backend only through `ProductApiService`.
+- Frontend state uses Angular signals so async API responses update reliably in Angular's zoneless runtime.
 
-⸻
+## Tests
 
-Suggested Project Structure
+Backend:
 
-.
-├── AGENTS.md
-├── README.md
-├── docker-compose.yml
-├── Makefile
-├── .env.example
-├── docs/
-│   └── sample-import.xlsx
-├── backend/
-│   ├── AGENTS.md
-│   ├── composer.json
-│   ├── phpunit.xml.dist
-│   ├── config/
-│   ├── migrations/
-│   ├── public/
-│   ├── src/
-│   ├── tests/
-│   └── var/
-├── frontend/
-│   ├── AGENTS.md
-│   ├── package.json
-│   ├── vite.config.ts
-│   ├── playwright.config.ts
-│   └── src/
-└── docker/
-    ├── nginx/
-    ├── php/
-    └── node/
+```bash
+cd backend
+php bin/phpunit
+```
 
-⸻
+Coverage includes discount calculation, XLSX mapping/parsing, image sync with fakes, import endpoint behavior, repeated import upsert behavior, product list/details, and not-found responses.
 
-Testing Requirements
+Frontend:
 
-Backend
+```bash
+cd frontend
+npm test -- --watch=false
+npm run e2e
+```
 
-The backend must include:
+Playwright tests mock the API, upload the provided sample `.xlsx`, verify import statistics, open the products page, and navigate to product details.
 
-* unit tests for discount calculation
-* unit tests for xlsx row mapping / parsing logic
-* integration tests for import API
-* integration tests for products list API
-* integration tests for product details API
-* tests for repeated import behavior
-* tests for uniqueness and upsert via external_code
-* tests for image download/storage logic using mocks or fakes
+If Playwright browsers are not installed locally:
 
-Frontend
+```bash
+cd frontend
+npx playwright install chromium
+```
 
-The frontend must include Playwright E2E tests for:
+## Non-Goals
 
-* uploading an .xlsx file
-* seeing imported products in the list
-* opening a product details page
-
-Testing Principles
-
-* tests must be deterministic
-* tests must be isolated
-* external HTTP calls must be mocked/faked in automated tests
-* important business paths must be covered first
-* avoid flaky selectors and timing assumptions in E2E tests
-
-⸻
-
-Fixtures / Seed Data
-
-The project should include fixtures or seed data for:
-
-* products
-* product_attributes
-* product_images
-
-Fixture data should be:
-
-* small
-* realistic
-* readable
-* useful for development and tests
-
-⸻
-
-Docker Requirements
-
-The project must run via Docker Compose.
-
-Expected services:
-
-1. app / php-fpm
-2. postgres
-3. nginx
-4. frontend / node
-
-Optional infrastructure such as Kafka or RabbitMQ should not be added unless it becomes truly necessary for the assignment.
-
-⸻
-
-Documentation Requirements
-
-The repository should include:
-
-* setup instructions
-* run commands
-* test commands
-* architecture notes
-* API documentation via Swagger/OpenAPI
-* implementation assumptions
-* notes about the .xlsx import format
-
-⸻
-
-Assumptions
-
-Unless the sample .xlsx requires otherwise, the following assumptions apply:
-
-* external_code is the primary business key for upsert
-* columns starting with Доп. поле belong to product_attributes
-* image URLs come from dedicated image-related columns in the source file
-* repeated imports update products instead of creating duplicates
-* browser E2E tests are implemented with Playwright, not Laravel Dusk, because the project stack is Symfony + Angular
-
-⸻
-
-Non-Goals
-
-The following are out of scope unless explicitly added later:
-
-* authentication
-* admin roles
-* background queues
-* Kafka / RabbitMQ integration
-* advanced filtering
-* search
-* pagination
-* export implementation
-* advanced media processing beyond download and local storage
-
-⸻
-
-Recommended Delivery Flow
-
-1. Define project structure
-2. Set up Docker Compose
-3. Initialize Symfony backend
-4. Initialize Angular frontend
-5. Create entities and migrations
-6. Implement import parser and services
-7. Implement API endpoints
-8. Implement frontend pages
-9. Add tests
-10. Add Swagger/OpenAPI docs
-11. Finalize README and cleanup
-
-⸻
-
-Quality Expectations
-
-This project should be delivered as a clean, practical, interview-quality solution.
-
-Expected qualities:
-
-* readable code
-* clear separation of responsibilities
-* stable structure
-* meaningful tests
-* predictable API
-* simple and pleasant UI
-* easy local setup
-* no overengineering
-
+Authentication, roles, background queues, Kafka/RabbitMQ, pagination, advanced search, and export are intentionally out of scope for this assignment.

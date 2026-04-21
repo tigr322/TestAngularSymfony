@@ -21,7 +21,7 @@ final readonly class ProductImportService
 
     public function import(UploadedFile $file): ImportResult
     {
-        if ($file->getClientOriginalExtension() !== 'xlsx') {
+        if (strtolower($file->getClientOriginalExtension()) !== 'xlsx') {
             throw new ImportFileException('Only .xlsx files are supported.');
         }
 
