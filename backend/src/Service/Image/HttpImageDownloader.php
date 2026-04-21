@@ -18,6 +18,15 @@ final readonly class HttpImageDownloader implements ImageDownloaderInterface
 
     public function download(string $url, string $externalCode): string
     {
+        $urlHash = sha1($url);
+        $extension = $this->extensionFromUrl($url);
+        $relativePath = sprintf('/uploads/products/%s/%s.%s', substr($urlHash, 0, 2), $urlHash, $extension);
+        $absolutePath = $this->projectDir.'/public'.$relativePath;
+
+        if (is_file($absolutePath)) {
+            return $relativePath;
+        }
+
         try {
             $response = $this->httpClient->request('GET', $url, ['timeout' => 10]);
             $statusCode = $response->getStatusCode();
@@ -36,8 +45,7 @@ final readonly class HttpImageDownloader implements ImageDownloaderInterface
         }
 
         $extension = $this->resolveExtension($url, $headers['content-type'][0] ?? null);
-        $safeCode = preg_replace('/[^A-Za-z0-9._-]+/', '-', $externalCode) ?: 'product';
-        $relativePath = sprintf('/uploads/products/%s/%s.%s', $safeCode, sha1($url), $extension);
+        $relativePath = sprintf('/uploads/products/%s/%s.%s', substr($urlHash, 0, 2), $urlHash, $extension);
         $absolutePath = $this->projectDir.'/public'.$relativePath;
 
         $directory = dirname($absolutePath);

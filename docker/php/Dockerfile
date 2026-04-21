@@ -15,5 +15,6 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+COPY conf.d/app.ini /usr/local/etc/php/conf.d/app.ini
 
 WORKDIR /var/www/backend
