@@ -12,40 +12,40 @@
     <input type="file" accept=".xlsx" (change)="onFileSelected($event)" />
   </label>
 
-  <div class="selected-file" *ngIf="selectedFile">
-    {{ selectedFile.name }}
+  <div class="selected-file" *ngIf="selectedFile() as file">
+    {{ file.name }}
   </div>
 
-  <button type="button" (click)="submit()" [disabled]="isLoading">
-    {{ isLoading ? 'Importing...' : 'Import products' }}
+  <button type="button" (click)="submit()" [disabled]="isLoading()">
+    {{ isLoading() ? 'Importing...' : 'Import products' }}
   </button>
 
-  <p class="error" *ngIf="error">{{ error }}</p>
+  <p class="error" *ngIf="error()">{{ error() }}</p>
 </section>
 
-<section class="stats" *ngIf="result">
+<section class="stats" *ngIf="result() as importResult">
   <article>
-    <span>{{ result.created }}</span>
+    <span>{{ importResult.created }}</span>
     <p>Created</p>
   </article>
   <article>
-    <span>{{ result.updated }}</span>
+    <span>{{ importResult.updated }}</span>
     <p>Updated</p>
   </article>
   <article>
-    <span>{{ result.skipped }}</span>
+    <span>{{ importResult.skipped }}</span>
     <p>Skipped</p>
   </article>
   <article>
-    <span>{{ result.errorCount }}</span>
+    <span>{{ importResult.errorCount }}</span>
     <p>Errors</p>
   </article>
 </section>
 
-<section class="panel" *ngIf="result?.errors?.length">
+<section class="panel" *ngIf="result() as importResult">
   <h2>Row-level feedback</h2>
-  <ul class="errors-list">
-    <li *ngFor="let rowError of result?.errors">
+  <ul class="errors-list" *ngIf="importResult.errors.length > 0">
+    <li *ngFor="let rowError of importResult.errors">
       <strong>Row {{ rowError.row }}:</strong> {{ rowError.message }}
     </li>
   </ul>

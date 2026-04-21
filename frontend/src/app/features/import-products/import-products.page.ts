@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import { ImportResponse } from '../../core/api/api.models';
@@ -13,38 +13,39 @@ import { ProductApiService } from '../../core/api/product-api.service';
   styleUrl: './import-products.page.scss',
 })
 export class ImportProductsPage {
-  selectedFile: File | null = null;
-  result: ImportResponse | null = null;
-  error: string | null = null;
-  isLoading = false;
+  readonly selectedFile = signal<File | null>(null);
+  readonly result = signal<ImportResponse | null>(null);
+  readonly error = signal<string | null>(null);
+  readonly isLoading = signal(false);
 
   constructor(private readonly productApi: ProductApiService) {}
 
   onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
-    this.selectedFile = input.files?.item(0) ?? null;
-    this.result = null;
-    this.error = null;
+    this.selectedFile.set(input.files?.item(0) ?? null);
+    this.result.set(null);
+    this.error.set(null);
   }
 
   submit(): void {
-    if (this.selectedFile === null) {
-      this.error = 'Choose an .xlsx file before importing.';
+    const file = this.selectedFile();
+    if (file === null) {
+      this.error.set('Choose an .xlsx file before importing.');
       return;
     }
 
-    this.isLoading = true;
-    this.error = null;
-    this.result = null;
+    this.isLoading.set(true);
+    this.error.set(null);
+    this.result.set(null);
 
-    this.productApi.importProducts(this.selectedFile).subscribe({
+    this.productApi.importProducts(file).subscribe({
       next: (response) => {
-        this.result = response;
-        this.isLoading = false;
+        this.result.set(response);
+        this.isLoading.set(false);
       },
       error: (error: unknown) => {
-        this.error = this.errorMessage(error);
-        this.isLoading = false;
+        this.error.set(this.errorMessage(error));
+        this.isLoading.set(false);
       },
     });
   }

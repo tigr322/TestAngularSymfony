@@ -6,14 +6,14 @@
   <a routerLink="/import" class="secondary-link">Import XLSX</a>
 </section>
 
-<section class="panel state" *ngIf="isLoading">Loading products...</section>
-<section class="panel error" *ngIf="error">{{ error }}</section>
-<section class="panel state" *ngIf="!isLoading && !error && products.length === 0">
+<section class="panel state" *ngIf="isLoading()">Loading products...</section>
+<section class="panel error" *ngIf="error()">{{ error() }}</section>
+<section class="panel state" *ngIf="!isLoading() && !error() && products().length === 0">
   No products have been imported yet.
 </section>
 
-<section class="products-grid" *ngIf="!isLoading && !error && products.length > 0">
-  <a class="product-card" *ngFor="let product of products" [routerLink]="['/products', product.id]">
+<section class="products-grid" *ngIf="!isLoading() && !error() && products().length > 0">
+  <a class="product-card" *ngFor="let product of products()" [routerLink]="['/products', product.id]">
     <div class="thumb">
       <img *ngIf="product.firstImage; else noImage" [src]="productApi.imageUrl(product.firstImage)" [alt]="product.name" />
       <ng-template #noImage><span>No image</span></ng-template>
