@@ -25,7 +25,7 @@ export class ProductDetailsPage implements OnInit {
   ngOnInit(): void {
     const id = Number(this.route.snapshot.paramMap.get('id'));
     if (!Number.isInteger(id) || id <= 0) {
-      this.error.set('Product not found.');
+      this.error.set('Товар не найден.');
       this.isLoading.set(false);
       return;
     }
@@ -44,13 +44,13 @@ export class ProductDetailsPage implements OnInit {
 
   private errorMessage(error: unknown): string {
     if (error instanceof HttpErrorResponse && error.status === 404) {
-      return 'Product not found.';
+      return 'Товар не найден.';
     }
 
     if (error instanceof HttpErrorResponse && typeof error.error?.error?.message === 'string') {
       return error.error.error.message;
     }
 
-    return 'Could not load product.';
+    return 'Не удалось загрузить товар.';
   }
 }

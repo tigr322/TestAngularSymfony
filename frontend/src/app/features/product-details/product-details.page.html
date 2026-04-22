@@ -1,12 +1,12 @@
 <section class="page-header">
   <div>
-    <p class="eyebrow">Product card</p>
-    <h1>{{ product()?.name || 'Product details' }}</h1>
+    <p class="eyebrow">Карточка товара</p>
+    <h1>{{ product()?.name || 'Детали товара' }}</h1>
   </div>
-  <a routerLink="/products" class="secondary-link">Back to products</a>
+  <a routerLink="/products" class="secondary-link">Назад к товарам</a>
 </section>
 
-<section class="panel state" *ngIf="isLoading()">Loading product...</section>
+<section class="panel state" *ngIf="isLoading()">Загружаем товар...</section>
 <section class="panel error" *ngIf="error()">{{ error() }}</section>
 
 <ng-container *ngIf="product() as productDetails">
@@ -17,32 +17,32 @@
         [src]="productApi.imageUrl(image.localPath)"
         [alt]="productDetails.name"
       />
-      <div class="state" *ngIf="productDetails.images.length === 0">No downloaded images.</div>
+      <div class="state" *ngIf="productDetails.images.length === 0">Скачанных изображений нет.</div>
     </div>
 
     <div class="panel summary">
       <p class="code">{{ productDetails.externalCode }}</p>
-      <p class="description">{{ productDetails.description || 'No description provided.' }}</p>
+      <p class="description">{{ productDetails.description || 'Описание не указано.' }}</p>
 
       <dl class="price-grid">
         <div>
-          <dt>Sale price</dt>
-          <dd>{{ productDetails.price }} RUB</dd>
+          <dt>Цена продажи</dt>
+          <dd>{{ productDetails.price }} руб.</dd>
         </div>
         <div>
-          <dt>Purchase price</dt>
-          <dd>{{ productDetails.purchasePrice || 'n/a' }}</dd>
+          <dt>Закупочная цена</dt>
+          <dd>{{ productDetails.purchasePrice || 'нет данных' }}</dd>
         </div>
         <div>
-          <dt>Discount</dt>
-          <dd>{{ productDetails.discountPercent ? productDetails.discountPercent + '%' : 'n/a' }}</dd>
+          <dt>Наценка</dt>
+          <dd>{{ productDetails.discountPercent ? productDetails.discountPercent + '%' : 'нет данных' }}</dd>
         </div>
       </dl>
     </div>
   </section>
 
   <section class="panel">
-    <h2>Attributes</h2>
+    <h2>Дополнительные поля</h2>
     <div class="attributes" *ngIf="productDetails.attributes.length > 0; else noAttributes">
       <div *ngFor="let attribute of productDetails.attributes">
         <dt>{{ attribute.key }}</dt>
@@ -50,7 +50,7 @@
       </div>
     </div>
     <ng-template #noAttributes>
-      <p class="state">No additional attributes.</p>
+      <p class="state">Дополнительные поля отсутствуют.</p>
     </ng-template>
   </section>
 </ng-container>

@@ -30,7 +30,7 @@ export class ImportProductsPage {
   submit(): void {
     const file = this.selectedFile();
     if (file === null) {
-      this.error.set('Choose an .xlsx file before importing.');
+      this.error.set('Выберите .xlsx файл перед импортом.');
       return;
     }
 
@@ -55,6 +55,6 @@ export class ImportProductsPage {
       return error.error.error.message;
     }
 
-    return 'Import request failed.';
+    return 'Не удалось выполнить импорт.';
   }
 }

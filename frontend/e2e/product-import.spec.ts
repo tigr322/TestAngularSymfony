@@ -29,13 +29,13 @@ test('uploads an xlsx file and shows import statistics', async ({ page }) => {
 
   await page.goto('/import');
   await page
-    .getByLabel('Excel file')
+    .getByLabel('Excel-файл')
     .setInputFiles(path.resolve(__dirname, '../../docs/import example (2).xlsx'));
-  await page.getByRole('button', { name: 'Import products' }).click();
+  await page.getByRole('button', { name: 'Импортировать товары' }).click();
 
   await expect(page.getByText('40')).toBeVisible();
-  await expect(page.getByText('Created')).toBeVisible();
-  await expect(page.getByText('Errors')).toBeVisible();
+  await expect(page.getByText('Создано')).toBeVisible();
+  await expect(page.getByText('Ошибки', { exact: true })).toBeVisible();
 });
 
 test('opens product list and product details', async ({ page }) => {
@@ -87,7 +87,7 @@ test('opens product list and product details', async ({ page }) => {
   });
 
   await page.goto('/products');
-  await expect(page.getByRole('heading', { name: 'Imported products' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Импортированные товары' })).toBeVisible();
   await page.getByRole('link', { name: /Imported product/ }).click();
 
   await expect(page.getByRole('heading', { name: 'Imported product' })).toBeVisible();

@@ -37,6 +37,6 @@ export class ProductsListPage implements OnInit {
       return error.error.error.message;
     }
 
-    return 'Could not load products.';
+    return 'Не удалось загрузить товары.';
   }
 }

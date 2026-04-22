@@ -1,14 +1,14 @@
 <section class="page-header">
   <div>
-    <p class="eyebrow">Product import</p>
-    <h1>Import products from XLSX</h1>
+    <p class="eyebrow">Импорт товаров</p>
+    <h1>Загрузка товаров из XLSX</h1>
   </div>
-  <a routerLink="/products" class="secondary-link">View products</a>
+  <a routerLink="/products" class="secondary-link">Смотреть товары</a>
 </section>
 
 <section class="panel">
   <label class="file-picker">
-    <span>Excel file</span>
+    <span>Excel-файл</span>
     <input type="file" accept=".xlsx" (change)="onFileSelected($event)" />
   </label>
 
@@ -17,7 +17,7 @@
   </div>
 
   <button type="button" (click)="submit()" [disabled]="isLoading()">
-    {{ isLoading() ? 'Importing...' : 'Import products' }}
+    {{ isLoading() ? 'Импортируем...' : 'Импортировать товары' }}
   </button>
 
   <p class="error" *ngIf="error()">{{ error() }}</p>
@@ -26,27 +26,27 @@
 <section class="stats" *ngIf="result() as importResult">
   <article>
     <span>{{ importResult.created }}</span>
-    <p>Created</p>
+    <p>Создано</p>
   </article>
   <article>
     <span>{{ importResult.updated }}</span>
-    <p>Updated</p>
+    <p>Обновлено</p>
   </article>
   <article>
     <span>{{ importResult.skipped }}</span>
-    <p>Skipped</p>
+    <p>Пропущено</p>
   </article>
   <article>
     <span>{{ importResult.errorCount }}</span>
-    <p>Errors</p>
+    <p>Ошибки</p>
   </article>
 </section>
 
 <section class="panel" *ngIf="result() as importResult">
-  <h2>Row-level feedback</h2>
+  <h2>Ошибки по строкам</h2>
   <ul class="errors-list" *ngIf="importResult.errors.length > 0">
     <li *ngFor="let rowError of importResult.errors">
-      <strong>Row {{ rowError.row }}:</strong> {{ rowError.message }}
+      <strong>Строка {{ rowError.row }}:</strong> {{ rowError.message }}
     </li>
   </ul>
 </section>
