@@ -1,6 +1,6 @@
 DC=docker compose
 
-.PHONY: setup up down restart logs shell composer-install npm-install migrate fixtures test-backend test-frontend test-e2e build-backend build-frontend
+.PHONY: setup up down restart logs shell composer-install npm-install migrate fixtures test-backend test-frontend test-e2e build-backend build-frontend queues
 
 setup: build-backend npm-install up composer-install migrate
 
@@ -34,6 +34,7 @@ fixtures:
 	$(DC) exec backend php bin/console doctrine:fixtures:load --no-interaction
 
 test-backend:
+	$(DC) exec backend php bin/console doctrine:database:create --if-not-exists --env=test
 	$(DC) exec backend php bin/phpunit
 
 test-frontend:
@@ -44,3 +45,6 @@ test-e2e:
 
 build-frontend:
 	$(DC) exec frontend npm run build
+
+queues:
+	$(DC) up -d rabbitmq

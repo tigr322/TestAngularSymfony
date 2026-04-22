@@ -8,7 +8,7 @@ The app imports products from an `.xlsx` file, upserts them by `external_code`, 
 
 - Backend: Symfony 8, Doctrine ORM, Doctrine Migrations, PostgreSQL, PhpSpreadsheet, Symfony HttpClient, PHPUnit, NelmioApiDocBundle
 - Frontend: Angular 21, TypeScript, Angular Router, Angular HttpClient, Angular CLI Vite-based dev/build pipeline, Playwright
-- Infrastructure: Docker Compose with `backend`, `nginx`, `postgres`, and `frontend` services
+- Infrastructure: Docker Compose with `backend`, `nginx`, `postgres`, `frontend`, and `rabbitmq` services
 
 ## Setup
 
@@ -28,19 +28,25 @@ make fixtures
 make test-backend
 make test-frontend
 make test-e2e
+make queues
 ```
 
 Local URLs:
 
 - Frontend: `http://localhost:4200`
 - Backend API through nginx: `http://localhost:8080/api`
+- Swagger UI: `http://localhost:8080/api/doc`
 - OpenAPI JSON: `http://localhost:8080/api/doc.json`
+- RabbitMQ management UI: `http://localhost:15672` using `app` / `app` by default
 
 ## API
 
 - `POST /api/import/products` accepts multipart form field `file` with an `.xlsx` document and returns import statistics.
 - `GET /api/products` returns list data for the products page.
 - `GET /api/products/{id}` returns core fields, attributes, and images for a product card.
+
+Browser documentation is available through Nelmio Swagger UI at `http://localhost:8080/api/doc`.
+The raw OpenAPI document remains available at `http://localhost:8080/api/doc.json`.
 
 ## XLSX Import Format
 
@@ -99,6 +105,31 @@ Repeated imports are deterministic:
 - Frontend pages are feature-based and consume the backend only through `ProductApiService`.
 - Frontend state uses Angular signals so async API responses update reliably in Angular's zoneless runtime.
 
+## Queue Infrastructure
+
+RabbitMQ is available as an infrastructure layer for future asynchronous work. It is intentionally not wired into the import flow yet, so the current synchronous import behavior stays simple and deterministic.
+
+Docker Compose exposes:
+
+- AMQP: `localhost:5672`
+- Management UI: `http://localhost:15672`
+
+Default credentials are configured through `.env.example` as `RABBITMQ_DEFAULT_USER=app` and `RABBITMQ_DEFAULT_PASS=app`.
+
+Start the full stack with:
+
+```bash
+make up
+```
+
+Start only the queue layer with:
+
+```bash
+make queues
+```
+
+Kafka is not included in the default Compose file for this scope. RabbitMQ covers the requested queue layer cleanly without adding broker complexity or unused application integration.
+
 ## Tests
 
 Backend:
@@ -129,4 +160,4 @@ npx playwright install chromium
 
 ## Non-Goals
 
-Authentication, roles, background queues, Kafka/RabbitMQ, pagination, advanced search, and export are intentionally out of scope for this assignment.
+Authentication, roles, deep queue integration, Kafka, pagination, advanced search, and export are intentionally out of scope for this assignment.
