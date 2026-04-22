@@ -22,26 +22,53 @@ final class ProductRepository extends ServiceEntityRepository
     }
 
     /** @return list<Product> */
-    public function findAllForList(): array
+   public function findAllForList(): array
+
     {
-        return $this->createQueryBuilder('product')
+
+        $result = $this->createQueryBuilder('product')
+
             ->leftJoin('product.images', 'image')
+
             ->addSelect('image')
+
             ->orderBy('product.id', 'ASC')
+
             ->getQuery()
+
             ->getResult();
+
+        /** @var list<Product> $result */
+
+        return $result;
+
     }
 
-    public function findForDetails(int $id): ?Product
+   public function findForDetails(int $id): ?Product
+
     {
-        return $this->createQueryBuilder('product')
+
+        $result = $this->createQueryBuilder('product')
+
             ->leftJoin('product.attributes', 'attribute')
+
             ->addSelect('attribute')
+
             ->leftJoin('product.images', 'image')
+
             ->addSelect('image')
+
             ->andWhere('product.id = :id')
+
             ->setParameter('id', $id)
+
             ->getQuery()
+
             ->getOneOrNullResult();
+
+        /** @var Product|null $result */
+
+        return $result;
+
     }
 }

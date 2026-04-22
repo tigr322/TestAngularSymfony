@@ -28,8 +28,15 @@ final class ProductApiTest extends WebTestCase
         $client->request('GET', '/api/products');
 
         self::assertResponseIsSuccessful();
-        $payload = json_decode($client->getResponse()->getContent(), true, flags: JSON_THROW_ON_ERROR);
+        $content = $client->getResponse()->getContent();
+        self::assertIsString($content);
+        $payload = json_decode($content, true, flags: JSON_THROW_ON_ERROR);
+        self::assertIsArray($payload);
+        self::assertArrayHasKey('items', $payload);
+        self::assertIsArray($payload['items']);
         self::assertCount(1, $payload['items']);
+        self::assertArrayHasKey(0, $payload['items']);
+        self::assertIsArray($payload['items'][0]);
         self::assertSame('fixture-code', $payload['items'][0]['externalCode']);
     }
 
@@ -42,9 +49,20 @@ final class ProductApiTest extends WebTestCase
         $client->request('GET', '/api/products/'.$product->getId());
 
         self::assertResponseIsSuccessful();
-        $payload = json_decode($client->getResponse()->getContent(), true, flags: JSON_THROW_ON_ERROR);
+        $content = $client->getResponse()->getContent();
+        self::assertIsString($content);
+        $payload = json_decode($content, true, flags: JSON_THROW_ON_ERROR);
+        self::assertIsArray($payload);
         self::assertSame('Fixture product', $payload['name']);
+        self::assertArrayHasKey('attributes', $payload);
+        self::assertIsArray($payload['attributes']);
+        self::assertArrayHasKey(0, $payload['attributes']);
+        self::assertIsArray($payload['attributes'][0]);
         self::assertSame('Бренд', $payload['attributes'][0]['key']);
+        self::assertArrayHasKey('images', $payload);
+        self::assertIsArray($payload['images']);
+        self::assertArrayHasKey(0, $payload['images']);
+        self::assertIsArray($payload['images'][0]);
         self::assertSame('/uploads/fixture.jpg', $payload['images'][0]['localPath']);
     }
 

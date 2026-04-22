@@ -16,7 +16,11 @@ final class DecimalNormalizer
             return number_format((float) $value, 2, '.', '');
         }
 
-        $normalized = trim((string) $value);
+        if (!is_string($value)) {
+            return null;
+        }
+
+        $normalized = trim($value);
         if ($normalized === '') {
             return null;
         }

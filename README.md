@@ -1,24 +1,26 @@
-# Product Import/Export Test Project
+# Импорт и просмотр товаров
 
-Fullstack test assignment built with Symfony, Doctrine ORM, PostgreSQL, Angular, Vite-powered Angular tooling, TypeScript, Docker Compose, PHPUnit, Playwright, PhpSpreadsheet, and Nelmio OpenAPI.
+Это тестовый fullstack-проект для импорта товаров из Excel-файла. Backend написан на Symfony, данные хранятся в PostgreSQL через Doctrine ORM, frontend сделан на Angular. Все запускается через Docker Compose.
 
-The app imports products from an `.xlsx` file, upserts them by `external_code`, stores additional `Доп. поле` columns as attributes, downloads product images locally, and exposes a small frontend for importing and browsing products.
+Главная идея простая: пользователь загружает `.xlsx` файл, backend читает строки, создает или обновляет товары по `external_code`, сохраняет дополнительные поля как атрибуты, скачивает изображения и отдает данные на frontend.
 
-## Stack
+## Стек
 
-- Backend: Symfony 8, Doctrine ORM, Doctrine Migrations, PostgreSQL, PhpSpreadsheet, Symfony HttpClient, PHPUnit, NelmioApiDocBundle
-- Frontend: Angular 21, TypeScript, Angular Router, Angular HttpClient, Angular CLI Vite-based dev/build pipeline, Playwright
-- Infrastructure: Docker Compose with `backend`, `nginx`, `postgres`, `frontend`, and `rabbitmq` services
+- Backend: Symfony 8, Doctrine ORM, Doctrine Migrations, PostgreSQL, PhpSpreadsheet, Symfony HttpClient, PHPUnit, NelmioApiDocBundle.
+- Frontend: Angular 21, TypeScript, Angular Router, Angular HttpClient, Angular CLI с Vite-based build/dev pipeline, Playwright.
+- Инфраструктура: Docker Compose c сервисами `backend`, `nginx`, `postgres`, `frontend` и `rabbitmq`.
 
-## Setup
+## Быстрый старт
+
+Для первого запуска:
 
 ```bash
 make setup
 ```
 
-This builds the PHP image, starts Docker Compose, installs backend/frontend dependencies, and runs migrations.
+Эта команда собирает PHP-образ, поднимает Docker Compose, ставит зависимости backend/frontend и запускает миграции.
 
-Useful commands:
+Полезные команды:
 
 ```bash
 make up
@@ -31,117 +33,194 @@ make test-e2e
 make queues
 ```
 
-Local URLs:
+Локальные адреса:
 
 - Frontend: `http://localhost:4200`
-- Backend API through nginx: `http://localhost:8080/api`
+- Backend API через nginx: `http://localhost:8080/api`
 - Swagger UI: `http://localhost:8080/api/doc`
 - OpenAPI JSON: `http://localhost:8080/api/doc.json`
-- RabbitMQ management UI: `http://localhost:15672` using `app` / `app` by default
+- RabbitMQ Management UI: `http://localhost:15672`, логин и пароль по умолчанию: `app` / `app`
 
 ## API
 
-- `POST /api/import/products` accepts multipart form field `file` with an `.xlsx` document and returns import statistics.
-- `GET /api/products` returns list data for the products page.
-- `GET /api/products/{id}` returns core fields, attributes, and images for a product card.
+В проекте есть импорт и полноценный CRUD для товаров:
 
-Browser documentation is available through Nelmio Swagger UI at `http://localhost:8080/api/doc`.
-The raw OpenAPI document remains available at `http://localhost:8080/api/doc.json`.
+- `POST /api/import/products` - принимает multipart form field `file` с `.xlsx` файлом и возвращает статистику импорта.
+- `GET /api/products` - возвращает список товаров для страницы каталога.
+- `GET /api/products/{id}` - возвращает карточку товара: основные поля, атрибуты и изображения.
+- `POST /api/products` - создает товар вручную.
+- `PUT /api/products/{id}` - полностью обновляет товар.
+- `DELETE /api/products/{id}` - удаляет товар.
 
-## XLSX Import Format
+Тело запроса для создания и обновления товара передается как JSON:
 
-Reference file: `docs/import example (2).xlsx`
+```json
+{
+  "externalCode": "manual-1",
+  "name": "Товар из API",
+  "description": "Описание товара",
+  "price": "1200.00",
+  "purchasePrice": "800.00",
+  "attributes": {
+    "Бренд": "MINIMI",
+    "Размер": "M"
+  }
+}
+```
 
-Expected sheet shape:
+Обязательные поля: `externalCode`, `name`, `price`. Поле `purchasePrice` можно не передавать или передать как `null`. `discountPercent` руками не передается: backend считает его сам по той же формуле, что и при импорте.
 
-- first sheet is used
-- row `1` contains headers
-- product rows start at row `2`
+Если `externalCode` уже занят другим товаром, API вернет `409 Conflict`. Ошибки валидации возвращаются как `400 Bad Request`.
 
-Core field mapping:
+Документация API доступна в браузере через Swagger UI:
 
-| Product field | XLSX column |
+```text
+http://localhost:8080/api/doc
+```
+
+Сырой OpenAPI JSON остается доступен отдельно:
+
+```text
+http://localhost:8080/api/doc.json
+```
+
+## Формат XLSX
+
+Файл-ориентир лежит здесь:
+
+```text
+docs/import example (2).xlsx
+```
+
+Как читается файл:
+
+- используется первый лист;
+- первая строка считается строкой заголовков;
+- товары начинаются со второй строки.
+
+Основные поля товара берутся так:
+
+| Поле товара | Колонка в XLSX |
 |---|---|
 | `externalCode` | `Внешний код` |
 | `name` | `Наименование` |
 | `description` | `Описание` |
 | `price` | `Цена: Цена продажи` |
 | `purchasePrice` | `Закупочная цена` |
-| `discountPercent` | calculated |
+| `discountPercent` | рассчитывается автоматически |
 
-Decimal values support comma notation such as `1320,00`.
+Числа можно писать с запятой, например `1320,00`.
 
-Discount formula:
+Формула наценки:
 
 ```text
 ((price - purchase_price) / purchase_price) * 100
 ```
 
-The value is rounded to two decimals. If purchase price is missing or zero, `discountPercent` is stored as `null`.
+Результат округляется до двух знаков после запятой. Если закупочная цена пустая или равна нулю, `discountPercent` сохраняется как `null`.
 
-## Attributes And Images
+## Атрибуты и изображения
 
-Every column starting with `Доп. поле:` is synchronized into `product_attributes`.
+Все колонки, которые начинаются с `Доп. поле:`, сохраняются в таблицу `product_attributes`.
 
-Image URLs are extracted from:
+Ссылки на изображения берутся из двух колонок:
 
-- `Доп. поле: Ссылка на упаковку`
-- `Доп. поле: Ссылки на фото`, split by comma
+- `Доп. поле: Ссылка на упаковку` - одна ссылка;
+- `Доп. поле: Ссылки на фото` - несколько ссылок через запятую.
 
-Images are downloaded to `backend/public/uploads/products/...`. The database stores both the original `sourceUrl` and the web-facing `localPath`.
+Картинки скачиваются в:
 
-Repeated imports are deterministic:
+```text
+backend/public/uploads/products/...
+```
 
-- products are upserted by `externalCode`
-- attributes are updated, created, or removed to match the current row
-- images are synchronized by source URL and are not duplicated
-- image download errors are returned as row-level import errors without rolling back the product row
+В базе сохраняются две вещи:
 
-## Architecture Notes
+- исходная ссылка `sourceUrl`;
+- локальный путь для браузера `localPath`.
 
-- Controllers only parse requests and return JSON responses.
-- Import logic is split into parser, mapper, validator-style row mapping, product sync, attribute sync, image sync, image download, and discount calculation services.
-- Doctrine repositories only contain query logic.
-- Frontend pages are feature-based and consume the backend only through `ProductApiService`.
-- Frontend state uses Angular signals so async API responses update reliably in Angular's zoneless runtime.
+Повторный импорт работает предсказуемо:
 
-## Queue Infrastructure
+- товар ищется и обновляется по `externalCode`;
+- атрибуты синхронизируются с текущей строкой файла;
+- старые атрибуты, которых больше нет в строке, удаляются;
+- изображения синхронизируются по исходной ссылке и не дублируются;
+- если картинка не скачалась, ошибка попадает в результат импорта, но сам товар не откатывается.
 
-RabbitMQ is available as an infrastructure layer for future asynchronous work. It is intentionally not wired into the import flow yet, so the current synchronous import behavior stays simple and deterministic.
+## Как устроен проект
 
-Docker Compose exposes:
+Backend сделан API-first. Контроллеры тонкие: они принимают запрос, вызывают сервис и возвращают JSON.
+
+Основная бизнес-логика разложена по небольшим сервисам:
+
+- чтение XLSX;
+- определение заголовков;
+- маппинг строки в данные товара;
+- расчет наценки;
+- создание или обновление товара;
+- синхронизация атрибутов;
+- синхронизация изображений;
+- скачивание изображений.
+
+Doctrine repositories используются только для запросов к базе. Они не управляют бизнес-процессами.
+
+Frontend разделен по feature-страницам и общается с backend только через `ProductApiService`. Состояние страниц хранится просто, через Angular signals: этого достаточно для загрузки, ошибок, пустых состояний и отображения результата импорта.
+
+## Очереди
+
+В Docker Compose добавлен RabbitMQ. Сейчас он нужен как инфраструктурный слой на будущее: импорт по-прежнему работает синхронно, без фоновых задач. Так проще отлаживать проект и легче проверять результат.
+
+RabbitMQ доступен так:
 
 - AMQP: `localhost:5672`
 - Management UI: `http://localhost:15672`
 
-Default credentials are configured through `.env.example` as `RABBITMQ_DEFAULT_USER=app` and `RABBITMQ_DEFAULT_PASS=app`.
+Логин и пароль по умолчанию задаются в `.env.example`:
 
-Start the full stack with:
+```dotenv
+RABBITMQ_DEFAULT_USER=app
+RABBITMQ_DEFAULT_PASS=app
+```
+
+Запустить весь проект:
 
 ```bash
 make up
 ```
 
-Start only the queue layer with:
+Запустить только очередь:
 
 ```bash
 make queues
 ```
 
-Kafka is not included in the default Compose file for this scope. RabbitMQ covers the requested queue layer cleanly without adding broker complexity or unused application integration.
+Kafka специально не добавлен в основной Compose-файл. Для текущего объема RabbitMQ закрывает требование по queue layer без лишней сложности и без неиспользуемой интеграции в коде.
 
-## Tests
+## Тесты
 
-Backend:
+Backend-тесты:
+
+```bash
+make test-backend
+```
+
+Или напрямую из папки backend:
 
 ```bash
 cd backend
 php bin/phpunit
 ```
 
-Coverage includes discount calculation, XLSX mapping/parsing, image sync with fakes, import endpoint behavior, repeated import upsert behavior, product list/details, and not-found responses.
+Покрыты важные части: расчет наценки, парсинг и маппинг XLSX, синхронизация изображений с fake downloader, endpoint импорта, повторный импорт, список товаров, карточка товара и not-found ответ.
 
-Frontend:
+Frontend-тесты:
+
+```bash
+make test-frontend
+make test-e2e
+```
+
+Или напрямую:
 
 ```bash
 cd frontend
@@ -149,15 +228,17 @@ npm test -- --watch=false
 npm run e2e
 ```
 
-Playwright tests mock the API, upload the provided sample `.xlsx`, verify import statistics, open the products page, and navigate to product details.
+Playwright-тесты мокают API, загружают пример `.xlsx`, проверяют статистику импорта, открывают список товаров и переходят в карточку товара.
 
-If Playwright browsers are not installed locally:
+Если браузер для Playwright еще не установлен:
 
 ```bash
 cd frontend
 npx playwright install chromium
 ```
 
-## Non-Goals
+## Что специально не сделано
 
-Authentication, roles, deep queue integration, Kafka, pagination, advanced search, and export are intentionally out of scope for this assignment.
+В проекте намеренно нет авторизации, ролей, глубокой интеграции очередей, Kafka, пагинации, продвинутого поиска и экспорта.
+
+Это сделано осознанно: задача проекта - показать чистый импорт, понятный API, рабочий frontend, документацию и минимальную инфраструктуру без лишнего усложнения.

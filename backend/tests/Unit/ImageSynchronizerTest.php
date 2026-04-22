@@ -23,7 +23,9 @@ final class ImageSynchronizerTest extends TestCase
 
         self::assertSame([], $errors);
         self::assertCount(1, $product->getImages());
-        self::assertSame('http://example.test/new.jpg', $product->getImages()->first()->getSourceUrl());
+        $firstImage = $product->getImages()->first();
+        self::assertNotFalse($firstImage);
+        self::assertSame('http://example.test/new.jpg', $firstImage->getSourceUrl());
     }
 
     public function testReportsDownloadErrorsWithoutFailingSync(): void

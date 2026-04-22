@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Service\Import;
 
-use App\DTO\ImportRowError;
 use App\DTO\ParsedImportRows;
 use App\Exception\ImportFileException;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
@@ -73,7 +72,9 @@ final readonly class XlsxProductParser
         $headers = [];
 
         for ($column = 1; $column <= $highestColumn; ++$column) {
-            $header = trim((string) $worksheet->getCell(Coordinate::stringFromColumnIndex($column).'1')->getValue());
+            $rawHeader = $worksheet->getCell(Coordinate::stringFromColumnIndex($column) . '1')->getValue();
+            $header = $this->scalarToTrimmedString($rawHeader);
+
             if ($header !== '') {
                 $headers[$column] = $header;
             }
@@ -102,7 +103,7 @@ final readonly class XlsxProductParser
         $values = [];
 
         foreach ($headers as $column => $header) {
-            $cell = $worksheet->getCell(Coordinate::stringFromColumnIndex($column).$rowNumber);
+            $cell = $worksheet->getCell(Coordinate::stringFromColumnIndex($column) . $rowNumber);
             $values[$header] = $cell->getCalculatedValue();
         }
 
@@ -113,11 +114,32 @@ final readonly class XlsxProductParser
     private function isEmptyRow(array $values): bool
     {
         foreach ($values as $value) {
-            if ($value !== null && trim((string) $value) !== '') {
+            if ($this->scalarToTrimmedString($value) !== '') {
                 return false;
             }
         }
 
         return true;
+    }
+
+    private function scalarToTrimmedString(mixed $value): string
+    {
+        if ($value === null) {
+            return '';
+        }
+
+        if (is_string($value)) {
+            return trim($value);
+        }
+
+        if (is_int($value) || is_float($value)) {
+            return trim((string) $value);
+        }
+
+        if (is_bool($value)) {
+            return $value ? '1' : '';
+        }
+
+        return '';
     }
 }

@@ -64,7 +64,10 @@ final readonly class ProductRowMapper
         );
     }
 
-    /** @param array<string, mixed> $values */
+    /**
+     * @param array<string, mixed> $values
+     * @return array<string, string>
+     */
     private function extractAttributes(array $values): array
     {
         $attributes = [];
@@ -82,6 +85,7 @@ final readonly class ProductRowMapper
             }
         }
 
+        /** @var array<string, string> $attributes */
         return $attributes;
     }
 
@@ -119,6 +123,7 @@ final readonly class ProductRowMapper
             $urls[$url] = $url;
         }
 
+        /** @var list<string> */
         return array_values($urls);
     }
 
@@ -139,6 +144,14 @@ final readonly class ProductRowMapper
             return $value->format('Y-m-d H:i:s');
         }
 
-        return trim((string) $value);
+        if (is_int($value) || is_float($value)) {
+            return trim((string) $value);
+        }
+
+        if (is_string($value)) {
+            return trim($value);
+        }
+
+        return '';
     }
 }

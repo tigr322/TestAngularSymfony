@@ -74,10 +74,15 @@ final readonly class HttpImageDownloader implements ImageDownloaderInterface
     }
 
     private function extensionFromUrl(string $url): string
-    {
-        $path = parse_url($url, PHP_URL_PATH);
-        $extension = $path === null ? '' : strtolower(pathinfo($path, PATHINFO_EXTENSION));
+{
+    $path = parse_url($url, PHP_URL_PATH);
 
-        return in_array($extension, ['jpg', 'jpeg', 'png', 'webp', 'gif'], true) ? $extension : 'jpg';
+    if (!is_string($path)) {
+        return 'jpg';
     }
+
+    $extension = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+
+    return in_array($extension, ['jpg', 'jpeg', 'png', 'webp', 'gif'], true) ? $extension : 'jpg';
+}
 }

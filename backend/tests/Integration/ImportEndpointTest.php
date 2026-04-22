@@ -31,7 +31,10 @@ final class ImportEndpointTest extends WebTestCase
         ]);
 
         self::assertResponseIsSuccessful();
-        $payload = json_decode($client->getResponse()->getContent(), true, flags: JSON_THROW_ON_ERROR);
+        $content = $client->getResponse()->getContent();
+        self::assertIsString($content);
+        $payload = json_decode($content, true, flags: JSON_THROW_ON_ERROR);
+        self::assertIsArray($payload);
         self::assertSame(1, $payload['created']);
         self::assertSame(0, $payload['updated']);
         self::assertSame(0, $payload['skipped']);
@@ -57,7 +60,10 @@ final class ImportEndpointTest extends WebTestCase
         ]);
         self::assertResponseIsSuccessful();
 
-        $payload = json_decode($client->getResponse()->getContent(), true, flags: JSON_THROW_ON_ERROR);
+        $content = $client->getResponse()->getContent();
+        self::assertIsString($content);
+        $payload = json_decode($content, true, flags: JSON_THROW_ON_ERROR);
+        self::assertIsArray($payload);
         self::assertSame(0, $payload['created']);
         self::assertSame(1, $payload['updated']);
 
